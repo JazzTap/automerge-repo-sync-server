@@ -12,6 +12,12 @@ server.
 
 `npx @automerge/automerge-repo-sync-server`
 
+Or you can run:
+```
+pnpm i
+pnpm start
+```
+
 The server is configured with environment variables. There are two options:
 
 - `PORT` - the port to listen for websocket connections on
