@@ -5,7 +5,11 @@ import { WebSocketServer } from "ws"
 import { Repo } from "@automerge/automerge-repo"
 import { NodeWSServerAdapter } from "@automerge/automerge-repo-network-websocket"
 import { NodeFSStorageAdapter } from "@automerge/automerge-repo-storage-nodefs"
+import storage from 'node-persist'
+import bs58 from 'bs58'
 import os from "os"
+
+await storage.init()
 
 export class Server {
   /** @type WebSocketServer */
@@ -51,6 +55,39 @@ export class Server {
 
     app.get("/", (req, res) => {
       res.send(`👍 @automerge/automerge-repo-sync-server is running`)
+    })
+
+    app.post('/api/handle', express.json({limit: 500}), async (req, res) => {
+      const {iid} = req.body
+      if (!iid || typeof iid !== 'string') {
+        return res.status(400).json({ 
+          error: 'Please provide a valid string in the iid field' 
+        });
+      }
+      res.json({ 
+        result: (await storage.getItem(iid)) || false
+      });
+    });
+
+    app.post('/api/assign', express.json({limit: 1500}), async (req, res) => {
+      const {iid, handle} = req.body
+
+      try {
+        if (!iid || typeof iid !== 'string' || !handle || !bs58.decode(handle)) {
+          return res.status(400).json({ 
+            error: 'Please provide a string _iid_, and an Automerge document _handle_' 
+          });
+        }
+        await storage.setItem(iid, handle)
+        res.json({
+          result: true
+        })
+      }
+      catch {
+        return res.status(400).json({ 
+          error: "oops, couldn't stash that handle" 
+        });
+      }
     })
 
     this.#server = app.listen(PORT, () => {
