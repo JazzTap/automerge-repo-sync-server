@@ -6,8 +6,10 @@ import { Repo } from "@automerge/automerge-repo"
 import { NodeWSServerAdapter } from "@automerge/automerge-repo-network-websocket"
 import { NodeFSStorageAdapter } from "@automerge/automerge-repo-storage-nodefs"
 import storage from 'node-persist'
-import bs58 from 'bs58'
 import os from "os"
+
+import cors from "cors"
+import bs58 from 'bs58' // experimental - only used to verify Automerge handles
 
 await storage.init()
 
@@ -40,7 +42,26 @@ export class Server {
     const PORT =
       process.env.PORT !== undefined ? parseInt(process.env.PORT) : 3030
     const app = express()
-    app.use(express.static("public"))
+
+    // app.use(express.static("public"))
+
+    // combine with cors middleware? https://stackoverflow.com/a/70233116
+    /** @ts-ignore @type {(import("cors").CorsOptions)}  */
+    let corsOptions = {
+      /** @ts-ignore @type {( requestOrigin: string | undefined,
+          callback: (err: Error | null, origin?: boolean | string | RegExp) => void,
+      ) => void
+      }  */
+      origin: function (origin, callback) {
+        let whitelist = ["http://localhost:8080", "http://bitsy.mixedinitiatives.net", "http://jazztap.github.io/bitsy"]
+        if (!origin || whitelist.indexOf(origin) !== -1) {
+          callback(null, true)
+        } else {
+          callback(new Error('Not allowed by CORS'))
+        }
+      }
+    }
+    app.use(cors(corsOptions))
 
     const config = {
       network: [new NodeWSServerAdapter(this.#socket)],
@@ -61,7 +82,7 @@ export class Server {
       const {iid} = req.body
       if (!iid || typeof iid !== 'string') {
         return res.status(400).json({ 
-          error: 'Please provide a valid string in the iid field' 
+          error: 'Please provide a valid string in the iid field'
         });
       }
       res.json({ 
