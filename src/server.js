@@ -53,7 +53,7 @@ export class Server {
       ) => void
       }  */
       origin: function (origin, callback) {
-        let whitelist = ["http://localhost:8080", "http://bitsy.mixedinitiatives.net", "http://jazztap.github.io/bitsy"]
+        let whitelist = ["http://localhost:8080", "https://bitsy.mixedinitiatives.net", "https://jazztap.github.io/bitsy"]
         if (!origin || whitelist.indexOf(origin) !== -1) {
           callback(null, true)
         } else {
